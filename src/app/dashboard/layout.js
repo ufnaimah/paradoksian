@@ -1,29 +1,38 @@
 "use client";
 
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
-  Globe, UserCog, Wrench, Home, BookOpen, BarChart3, Users, LayoutDashboard, FileText, Bell
+  Globe, UserCog, Wrench, Home, BookOpen, BarChart3, Users, LayoutDashboard, FileText, Bell, Award, User
 } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname() || '';
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   let role = 'murid';
-  let userName = 'Rizky Aditya';
+  let userName = user?.nama || 'Mahasiswa';
   let userSubtitle = 'Mahasiswa';
-  let userInitials = 'RA';
+  let userInitials = userName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
   if (pathname.includes('/admin')) {
     role = 'admin';
-    userName = 'Admin Pusat';
+    userName = user?.nama || 'Admin Pusat';
     userSubtitle = 'Administrator';
-    userInitials = 'AP';
+    userInitials = userName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   } else if (pathname.includes('/dosen')) {
     role = 'dosen';
-    userName = 'Dr. Sari Permata';
+    userName = user?.nama || 'Dosen';
     userSubtitle = 'Dosen';
-    userInitials = 'SP';
+    userInitials = userName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   }
 
   // --- DEFINISI MENU BERDASARKAN ROLE ---
@@ -41,14 +50,14 @@ export default function DashboardLayout({ children }) {
   ];
 
   const mahasiswaMenus = [
-    { path: '/dashboard/mahasiswa', icon: Home, label: 'Overview' },
-    { path: '/dashboard/mahasiswa/matkul', icon: BookOpen, label: 'Mata Kuliah' },
-    { path: '/dashboard/mahasiswa/ipk', icon: BarChart3, label: 'Simulasi IPK' },
-    { path: '/dashboard/mahasiswa/peer-radar', icon: Users, label: 'Peer Radar' },
-    { path: '/dashboard/mahasiswa/cumlaude', icon: LayoutDashboard, label: 'Cum Laude Tracker' },
-    { path: '/dashboard/mahasiswa/gcr', icon: Globe, label: 'Google Classroom' },
-    { path: '/dashboard/mahasiswa/notifikasi', icon: Bell, label: 'Notifikasi' },
-    { path: '/dashboard/mahasiswa/profil', icon: UserCog, label: 'Profil Saya' }
+    { path: '/dashboard/mahasiswa', icon: Home, label: 'Dashboard', section: 'menu' },
+    { path: '/dashboard/mahasiswa/matkul', icon: BookOpen, label: 'Mata Kuliah', section: 'menu' },
+    { path: '/dashboard/mahasiswa/gcr', icon: Globe, label: 'GCR Mahasiswa', section: 'menu' },
+    { path: '/dashboard/mahasiswa/ipk', icon: BarChart3, label: 'IPK Tracker', section: 'menu' },
+    { path: '/dashboard/mahasiswa/peer-radar', icon: Users, label: 'Peer Radar', section: 'menu', badge: 2 },
+    { path: '/dashboard/mahasiswa/cumlaude', icon: Award, label: 'Cum Laude', section: 'menu', badge: 'CL' },
+    { path: '/dashboard/mahasiswa/notifikasi', icon: Bell, label: 'Notifikasi', section: 'akun', badge: 3 },
+    { path: '/dashboard/mahasiswa/profil', icon: User, label: 'Profil', section: 'akun' }
   ];
 
   // Pilih menu yang akan di-render
@@ -71,19 +80,48 @@ export default function DashboardLayout({ children }) {
         </div>
 
         <nav className="px-3 py-4 flex-1 overflow-y-auto">
-          <div className="text-[10px] font-bold text-white/30 tracking-[1.2px] uppercase px-2 mb-1.5">Menu Utama</div>
+          <div className="text-[10px] font-bold text-white/30 tracking-[1.2px] uppercase px-2 mb-1.5">Menu</div>
 
-          {/* Render menu secara dinamis */}
-          {activeMenus.map((item) => (
+          {/* Render menu utama */}
+          {activeMenus.filter(item => item.section !== 'akun').map((item) => (
             <Link key={item.path} href={item.path}>
               <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] cursor-pointer transition-all text-[13px] font-medium mb-0.5 ${
                 pathname === item.path ? 'bg-[var(--cream)]/[0.13] text-[var(--cream)] shadow-sm' : 'text-white/55 hover:bg-white/[0.08] hover:text-white/85'
               }`}>
                 <item.icon className="w-[17px] h-[17px] flex-shrink-0" />
-                <span>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
+                {item.badge && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
+                    item.badge === 'CL' ? 'bg-[var(--success)] text-white' : 'bg-[var(--danger)] text-white'
+                  }`}>
+                    {item.badge}
+                  </span>
+                )}
               </div>
             </Link>
           ))}
+
+          {/* Akun section */}
+          {role === 'murid' && activeMenus.some(item => item.section === 'akun') && (
+            <>
+              <div className="text-[10px] font-bold text-white/30 tracking-[1.2px] uppercase px-2 mb-1.5 mt-4">Akun</div>
+              {activeMenus.filter(item => item.section === 'akun').map((item) => (
+                <Link key={item.path} href={item.path}>
+                  <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] cursor-pointer transition-all text-[13px] font-medium mb-0.5 ${
+                    pathname === item.path ? 'bg-[var(--cream)]/[0.13] text-[var(--cream)] shadow-sm' : 'text-white/55 hover:bg-white/[0.08] hover:text-white/85'
+                  }`}>
+                    <item.icon className="w-[17px] h-[17px] flex-shrink-0" />
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center bg-[var(--danger)] text-white">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </>
+          )}
         </nav>
 
         <Link href="/">

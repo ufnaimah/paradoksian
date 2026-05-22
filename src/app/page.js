@@ -21,6 +21,11 @@ export default function LoginPage() {
       return;
     }
 
+    if (!supabase) {
+      setError('Koneksi database tidak tersedia. Periksa konfigurasi.');
+      return;
+    }
+
     setLoading(true);
 
     try {
