@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  Globe, UserCog, Wrench, Home, BookOpen, BarChart3, Users, LayoutDashboard, Settings
+  Globe, UserCog, Wrench, Home, BookOpen, BarChart3, Users, LayoutDashboard, FileText, Bell
 } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
@@ -26,6 +26,34 @@ export default function DashboardLayout({ children }) {
     userInitials = 'SP';
   }
 
+  // --- DEFINISI MENU BERDASARKAN ROLE ---
+  const adminMenus = [
+    { path: '/dashboard/admin', icon: Globe, label: 'Dashboard Global' },
+    { path: '/dashboard/admin/users', icon: UserCog, label: 'Manajemen User' },
+    { path: '/dashboard/admin/config', icon: Wrench, label: 'Bare Minimum Config' }
+  ];
+
+  const dosenMenus = [
+    { path: '/dashboard/dosen', icon: LayoutDashboard, label: 'Dashboard Pengajar' },
+    { path: '/dashboard/dosen/syllabus', icon: BookOpen, label: 'Konfigurasi Silabus' },
+    { path: '/dashboard/dosen/gcr', icon: Users, label: 'Google Classroom' },
+    { path: '/dashboard/dosen/kelola', icon: FileText, label: 'Kelola Penilaian' }
+  ];
+
+  const mahasiswaMenus = [
+    { path: '/dashboard/mahasiswa', icon: Home, label: 'Overview' },
+    { path: '/dashboard/mahasiswa/matkul', icon: BookOpen, label: 'Mata Kuliah' },
+    { path: '/dashboard/mahasiswa/ipk', icon: BarChart3, label: 'Simulasi IPK' },
+    { path: '/dashboard/mahasiswa/peer-radar', icon: Users, label: 'Peer Radar' },
+    { path: '/dashboard/mahasiswa/cumlaude', icon: LayoutDashboard, label: 'Cum Laude Tracker' },
+    { path: '/dashboard/mahasiswa/gcr', icon: Globe, label: 'Google Classroom' },
+    { path: '/dashboard/mahasiswa/notifikasi', icon: Bell, label: 'Notifikasi' },
+    { path: '/dashboard/mahasiswa/profil', icon: UserCog, label: 'Profil Saya' }
+  ];
+
+  // Pilih menu yang akan di-render
+  const activeMenus = role === 'admin' ? adminMenus : role === 'dosen' ? dosenMenus : mahasiswaMenus;
+
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--gray-bg)] font-sans">
       {/* Sidebar Kiri */}
@@ -45,11 +73,8 @@ export default function DashboardLayout({ children }) {
         <nav className="px-3 py-4 flex-1 overflow-y-auto">
           <div className="text-[10px] font-bold text-white/30 tracking-[1.2px] uppercase px-2 mb-1.5">Menu Utama</div>
 
-          {role === 'admin' && [
-            { path: '/dashboard/admin', icon: Globe, label: 'Dashboard Global' },
-            { path: '/dashboard/admin/users', icon: UserCog, label: 'Manajemen User' },
-            { path: '/dashboard/admin/config', icon: Wrench, label: 'Bare Minimum Config' }
-          ].map((item) => (
+          {/* Render menu secara dinamis */}
+          {activeMenus.map((item) => (
             <Link key={item.path} href={item.path}>
               <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] cursor-pointer transition-all text-[13px] font-medium mb-0.5 ${
                 pathname === item.path ? 'bg-[var(--cream)]/[0.13] text-[var(--cream)] shadow-sm' : 'text-white/55 hover:bg-white/[0.08] hover:text-white/85'
@@ -59,8 +84,6 @@ export default function DashboardLayout({ children }) {
               </div>
             </Link>
           ))}
-          
-          {/* Tambahkan menu dosen/mahasiswa di sini jika perlu */}
         </nav>
 
         <Link href="/">
@@ -76,7 +99,7 @@ export default function DashboardLayout({ children }) {
         </Link>
       </aside>
 
-      {/* Main Content (Area luas karena kalender sudah dihapus) */}
+      {/* Main Content */}
       <main className="flex-1 overflow-y-auto px-8 py-8 pb-10 min-w-0 bg-[var(--gray-bg)]">
         <div className="max-w-7xl mx-auto">
           {children}

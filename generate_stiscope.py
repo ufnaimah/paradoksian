@@ -10,8 +10,7 @@ FIRST_NAMES = ['Rizky', 'Andi', 'Budi', 'Siti', 'Ayu', 'Dimas', 'Putri', 'Muhamm
 LAST_NAMES = ['Pratama', 'Saputra', 'Wijaya', 'Sari', 'Lestari', 'Santoso', 'Hidayat', 'Setiawan', 'Ramadhan', 'Kusuma', 'Maulana', 'Nugroho', 'Siregar', 'Wulandari', 'Rahman']
 
 def generate_student_name():
-    """Menghasilkan nama mahasiswa 1 atau 2 kata yang bervariasi"""
-    num_words = random.choices([1, 2], weights=[0.2, 0.8])[0] # 80% kemungkinan 2 kata, 20% 1 kata
+    num_words = random.choices([1, 2], weights=[0.2, 0.8])[0]
     first = random.choice(FIRST_NAMES)
     if num_words == 1:
         return first
@@ -52,7 +51,7 @@ with open('seed_database.sql', 'w', encoding='utf-8') as f:
     f.write("-- RE-SEED DATABASE STISCOPE (RAW DATA ONLY)\n")
     f.write("TRUNCATE TABLE public.analytics_cache, public.grades, public.enrollments, public.syllabus_config, public.courses, public.mahasiswa, public.dosen, public.admins CASCADE;\n\n")
 
-    # 2. Insert Admins & Dosen (Diperluas menjadi 7 Dosen)
+    # 2. Insert Admins & Dosen
     f.write("INSERT INTO public.admins (admin_id, nama, email) VALUES\n")
     f.write("('A001', 'Admin Pusat STIS', 'admin@stis.ac.id');\n\n")
 
@@ -78,10 +77,18 @@ with open('seed_database.sql', 'w', encoding='utf-8') as f:
     for i in range(NUM_STUDENTS):
         user_id = f"U{str(i+1).zfill(3)}"
         nim = f"22{unique_nim_suffixes[i]}"
-        nama = generate_student_name() # Panggil fungsi pembuat nama realistis
-        prodi = random.choice(['D3 Statistika', 'D4 Statistika', 'D4 Komputasi Statistik'])
+        nama = generate_student_name()
+        
         tahun_masuk = random.choice([2022, 2023, 2024, 2025])
         tingkat = CURRENT_YEAR - tahun_masuk
+        
+        # --- PERBAIKAN LOGIKA D3 DI SINI ---
+        if tingkat == 4:
+            # Jika tingkat 4, hanya boleh D4
+            prodi = random.choice(['D4 Statistika', 'D4 Komputasi Statistik'])
+        else:
+            # Jika tingkat 1, 2, 3, boleh semuanya termasuk D3
+            prodi = random.choice(['D3 Statistika', 'D4 Statistika', 'D4 Komputasi Statistik'])
         
         peminatan, singkatan = get_kelas_info(tingkat, prodi)
         
@@ -93,7 +100,8 @@ with open('seed_database.sql', 'w', encoding='utf-8') as f:
         kelas = f"{tingkat}{singkatan}{urutan_kelas}"
         class_counter[counter_key] += 1
         
-        ipk_base = round(random.uniform(2.0, 3.9), 2)
+        # Batas IPK Baseline di set mulai 2.50 agar logis dengan standar DO
+        ipk_base = round(random.uniform(2.5, 4.0), 2)
         email_prefix = nama.lower().replace(" ", "")
         
         mahasiswa_data.append(f"('{user_id}', '{nama}', '{nim}', '{prodi}', '{peminatan}', {tingkat}, 'mahasiswa', {ipk_base}, '{email_prefix}@stis.ac.id', {tahun_masuk}, '{kelas}')")
@@ -101,7 +109,7 @@ with open('seed_database.sql', 'w', encoding='utf-8') as f:
     f.write("INSERT INTO public.mahasiswa (user_id, nama, nim, prodi, peminatan, tingkat, role, ipk_baseline, email, tahun_masuk, kelas) VALUES\n")
     f.write(",\n".join(mahasiswa_data) + ";\n\n")
 
-    # 4. Generate Courses & Syllabus Config (Diperluas menjadi 7 Mata Kuliah)
+    # 4. Generate Courses & Syllabus Config
     courses = [
         ('C001', 'STK101', 'Metode Statistika', 3, 'D3 Statistika', 1, 'D001', 'Praktikum'),
         ('C002', 'STK201', 'Statistika Matematika I', 3, 'D4 Statistika', 3, 'D002', 'Teori'),
@@ -130,7 +138,6 @@ with open('seed_database.sql', 'w', encoding='utf-8') as f:
     enrollments, grades = [], []
     for i in range(NUM_STUDENTS):
         user_id = f"U{str(i+1).zfill(3)}"
-        # Mahasiswa mengambil 3-4 matkul acak agar data lebih padat
         num_courses_taken = random.choice([3, 4])
         taken_courses = random.sample(courses, num_courses_taken)
         
@@ -150,4 +157,4 @@ with open('seed_database.sql', 'w', encoding='utf-8') as f:
     
     f.write("-- Tabel analytics_cache dibiarkan kosong.\n")
 
-print("File seed_database.sql berhasil dibuat (Variasi Nama & 7 Matkul/Dosen)!")
+print("File seed_database.sql berhasil dibuat! (Tingkat 4 bebas dari D3)")
